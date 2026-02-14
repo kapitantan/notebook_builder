@@ -38,13 +38,22 @@ def add_youtube_notebook(notebook_id, youtube_url):
     )
     return r
 
+def get_notebook_name_list():
+    r = requests.get(
+        url=URL+":listRecentlyViewed",
+        headers=HEADERS
+    )
+    return r
+
 def main():
-    r = create_notebook("youtube")
-    data = json.loads(r.text)
-    print(data)
-    notebook_id = data["notebookId"] 
-    r = add_youtube_notebook(notebook_id, "https://www.youtube.com/watch?v=55_h0tTezyU&list=WL&index=2&t=54s")
+    r = get_notebook_name_list()
     print(r.text)
+    # r = create_notebook(youtube_title)
+    # data = json.loads(r.text)
+    # print(data)
+    # notebook_id = data["notebookId"] 
+    # r = add_youtube_notebook(notebook_id, "https://www.youtube.com/watch?v=55_h0tTezyU&list=WL&index=2&t=54s")
+    # print(r.text)
     
 
 
