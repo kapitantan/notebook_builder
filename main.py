@@ -2,6 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import json
+import re
 
 import google.auth
 import google.auth.transport.requests
@@ -91,15 +92,40 @@ def download_text_file(service, file_id: str) -> str:
     return fh.getvalue().decode("utf-8", errors="replace")
 
 
+def parse_frontmatter_metadata(md_text: str):
+    # 先頭 frontmatter の title / source を抽出する
+    m = re.match(r"^---\s*\n(.*?)\n---\s*\n?", md_text, flags=re.DOTALL)
+    if not m:
+        return None, None
+
+    frontmatter = m.group(1)
+    title = None
+    source = None
+    for line in frontmatter.splitlines():
+        stripped = line.strip()
+        if not stripped or ":" not in stripped:
+            continue
+        key, value = stripped.split(":", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key == "title":
+            title = value
+        elif key == "source":
+            source = value
+    return title, source
+
+
 def main():
     # 作成済みnotebook名を取得
     r = get_notebook_name_list()
     data = json.loads(r.text)
 
-    title_list = []
+    title_set = set()
     for v in data["notebooks"]:
-        title_list.append(v["title"])
-    print(title_list)
+        title = v.get("title")
+        if title:
+            title_set.add(title)
+    print("existing notebooks:", sorted(title_set))
 
     # google drive上のmdファイルを探索
     svc = drive_service_readonly()
@@ -109,17 +135,38 @@ def main():
     md_files = list_md_files_in_folder(svc, youtube_id)
     print("md files:", [f["name"] for f in md_files])
 
-    # 先頭ファイルの本文を取得（本文そのものはログ出力しない）
-    if md_files:
-        content = download_text_file(svc, md_files[0]["id"])
-        print("first md chars:", len(content))
+    for md_file in md_files:
+        content = download_text_file(svc, md_file["id"])
+        title, source = parse_frontmatter_metadata(content)
 
-    # r = create_notebook("世界初のコンピュータの写真。写っている女性は何者なのか？143")
-    # data = json.loads(r.text)
-    # print(data)
-    # notebook_id = data["notebookId"] 
-    # r = add_youtube_notebook(notebook_id, "https://www.youtube.com/watch?v=55_h0tTezyU&list=WL&index=2&t=54s")
-    # print(r.text)
+        if not title or not source:
+            print(f"skip {md_file['name']}: title/source not found")
+            continue
+        if "youtube.com" not in source and "youtu.be" not in source:
+            print(f"skip {md_file['name']}: source is not youtube url")
+            continue
+        if title in title_set:
+            print(f"skip {md_file['name']}: notebook already exists ({title})")
+            continue
+
+        create_res = create_notebook(title)
+        if not create_res.ok:
+            print(f"create failed {md_file['name']}: status={create_res.status_code} body={create_res.text}")
+            continue
+
+        create_data = create_res.json()
+        notebook_id = create_data.get("notebookId")
+        if not notebook_id:
+            print(f"create failed {md_file['name']}: notebookId not found in response")
+            continue
+
+        add_res = add_youtube_notebook(notebook_id, source)
+        if not add_res.ok:
+            print(f"source add failed {md_file['name']}: status={add_res.status_code} body={add_res.text}")
+            continue
+
+        title_set.add(title)
+        print(f"created notebook: {title} ({notebook_id})")
     
 
 
