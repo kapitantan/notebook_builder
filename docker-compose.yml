@@ -1,0 +1,16 @@
+services:
+  gcloud:
+    build: .
+    container_name: gcloud-dev
+    tty: true
+    stdin_open: true
+    environment:
+      - CLOUDSDK_CONFIG=/gcloud
+    volumes:
+      # gcloudのログイン情報・設定を永続化（重要）
+      - gcloud-config:/gcloud
+      # 作業ディレクトリをマウント
+      - ./:/workspace
+
+volumes:
+  gcloud-config:

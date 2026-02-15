@@ -46,9 +46,19 @@ def get_notebook_name_list():
     return r
 
 def main():
+    # 作成済みnotebook名を取得
     r = get_notebook_name_list()
     print(r.text)
-    # r = create_notebook(youtube_title)
+    data = json.loads(r.text)
+
+    title_list = []
+    for v in data["notebooks"]:
+        title_list.append(v["title"])
+    print(title_list)
+
+    # google drive上のmdファイルを探索
+
+    # r = create_notebook("世界初のコンピュータの写真。写っている女性は何者なのか？143")
     # data = json.loads(r.text)
     # print(data)
     # notebook_id = data["notebookId"] 
