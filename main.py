@@ -1,6 +1,4 @@
 import requests
-import os
-from dotenv import load_dotenv
 import json
 import re
 
@@ -10,15 +8,24 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io
 
-load_dotenv()
-ACCESS_TOKEN = os.environ["ACCESS_TOKEN"]
 NOTEBOOK_URL  = "https://global-discoveryengine.googleapis.com/v1alpha/projects/37375335489/locations/global/notebooks"
-NOTEBOOK_HEADERS  = {
-        "Authorization":f"Bearer {ACCESS_TOKEN}",
-        "Content-Type":"application/json"
+
+
+def get_notebook_headers():
+    creds, _ = google.auth.default(
+        scopes=["https://www.googleapis.com/auth/cloud-platform"]
+    )
+    req = google.auth.transport.requests.Request()
+    if not creds.valid:
+        creds.refresh(req)
+    return {
+        "Authorization": f"Bearer {creds.token}",
+        "Content-Type": "application/json",
     }
+
+
 def get_notebook_name_list():
-    return requests.get(url=NOTEBOOK_URL + ":listRecentlyViewed", headers=NOTEBOOK_HEADERS)
+    return requests.get(url=NOTEBOOK_URL + ":listRecentlyViewed", headers=get_notebook_headers())
 
 
 def create_notebook(youtube_title):
@@ -28,7 +35,7 @@ def create_notebook(youtube_title):
     r = requests.post(
         url=NOTEBOOK_URL,
         json=payload, 
-        headers=NOTEBOOK_HEADERS
+        headers=get_notebook_headers()
     )
     return r
 
@@ -44,7 +51,7 @@ def add_youtube_notebook(notebook_id, youtube_url):
     r = requests.post(
         NOTEBOOK_URL + "/" + notebook_id  + "/sources:batchCreate" ,
         json=payload, 
-        headers=NOTEBOOK_HEADERS
+        headers=get_notebook_headers()
     )
     return r
 

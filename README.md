@@ -12,14 +12,10 @@
 1. ○○
 
 ## 実施メモ
-認証する
-- gcloud auth login
-アクセストークンの設定
-- export ACCESS_TOKEN=$(gcloud auth print-access-token)
-main.pyの実行
-- uv run main.py
-
-google drive APIを呼ぶための認証
+認証する（コンテナ内）
 - gcloud auth application-default login --scopes=https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/cloud-platform
+- gcloud auth application-default set-quota-project <YOUR_PROJECT_ID>
 
+main.pyの実行
+- docker compose up --build
 
