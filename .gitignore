@@ -10,3 +10,6 @@ wheels/
 .venv
 .env
 **symlink
+credentials/
+secrets/
+application_default_credentials.json

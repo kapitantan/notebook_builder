@@ -8,6 +8,8 @@
 - obsidian web cliperを使用して、youtubeを保存する
 - google cloudからgoogle drive apiを呼んで、保存した内容を読み込む
 - notebookを自動で作成する
+## 具体的手順
+1. ○○
 
 ## 実施メモ
 認証する
